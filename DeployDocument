@@ -1,0 +1,99 @@
+前言
+192.168.133.101 flink-masters
+    Java
+    Scala
+    Flink
+192.168.133.102 flink-slaves01
+    Java
+    Scala
+    Flink
+    Redis
+192.168.133.103 flink-slaves02
+    Java
+    Scala
+    Flink
+
+一、安装前置内容
+    1、ssh免密登录配置
+        ssh-keygen -t rsa
+        ssh-copy-id 主机名
+    2、java1.8+安装
+    3、Centos7文件修改
+        a、网卡配置
+            vi /etc/sysconfig/network-scripts/ifcfg-ens32
+                TYPE="Ethernet"
+                PROXY_METHOD="none"
+                BROWSER_ONLY="no"
+                BOOTPROTO="static"
+                DEFROUTE="yes"
+                IPV4_FAILURE_FATAL="no"
+                IPV6INIT="yes"
+                IPV6_AUTOCONF="yes"
+                IPV6_DEFROUTE="yes"
+                IPV6_FAILURE_FATAL="no"
+                IPV6_ADDR_GEN_MODE="stable-privacy"
+                NAME="ens32"
+                UUID="dcd932b2-3656-47a2-8106-ec24c72cfaef"
+                DEVICE="ens32"
+                ONBOOT="yes"
+                IPADDR="192.168.133.101"
+                PREFIX="24"
+                GATEWAY="192.168.133.1"
+                IPV6_PRIVACY="no"
+                DNS1="8.8.8.8"
+            重启网卡：systemctl restart network
+        b、域名映射配置
+            vi /etc/hosts
+                192.168.133.101 flink-masters
+                192.168.133.102 flink-slaves01
+                192.168.133.103 flink-slaves02
+        c、远程交互方式配置(关闭不必要的检验)
+            vi /etc/ssh/sshd_config
+                UseDNS no
+                GSSAPIAuthentication no
+        d、防火墙关闭
+            systemctl status firewalld
+            systemctl stop firewalld
+            systemctl disable firewalld
+    4、其他修改
+        a、修改机器名称
+            vi /etc/hostname
+            systemctl restart systemd-hostnamed
+
+二、Flink安装
+    1、Flink部署方式之Standalone
+        a、配置文件修改
+            vi /usr/local/flink/flink-1.11.0/conf/flink-conf.yaml
+                jobmanager.rpc.address: flink-masters
+            vi /usr/local/flink/flink-1.11.0/conf/masters
+                masters:8081
+            vi /usr/local/flink/flink-1.11.0/conf/workers
+                flink-slaves01
+                flink-slaves02
+            修改后所有机器分发
+        b、配置环境变量
+        c、启动Flink
+            启动集群命令：start-cluster.sh
+            master进程-TaskManagerRunner
+                     -StandaloneSessionClusterEntrypoint
+            worker进程-TaskManagerRunner
+            停止集群命令：stop-cluster.sh
+    2、Flink部署方式之FlinkOnYarn
+
+
+    3、Flink部署方式之FlinkOnHAAboutStandAlone
+
+    4、Flink部署方式之FlinkOnHAAboutFlinkOnYarn
+
+三、数据库安装
+    1、Redis单节点安装
+        gcc版本过低报错
+        yum -y install centos-release-scl
+        yum -y install devtoolset-9-gcc devtoolset-9-gcc-c++ devtoolset-9-binutils
+        scl enable devtoolset-9 bash
+        echo "source /opt/rh/devtoolset-9/enable" >> /etc/profile
+        tcl缺少或版本过低
+        yum -y install tcl
+
+        启动：redis-server
+
